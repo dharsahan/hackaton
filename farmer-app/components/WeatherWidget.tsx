@@ -5,21 +5,21 @@ export default async function WeatherWidget() {
   const weather = await getWeather();
 
   return (
-    <div className="bg-gradient-to-br from-earth-dark to-[#0a180d] p-5 rounded-2xl shadow-card text-white relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-      {/* Weather Alert Pill */}
+    <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+      {/* Weather Alert */}
       {weather.alert && (
-        <div className="absolute top-4 right-4 bg-ochre/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm animate-pulse z-10 cursor-pointer hover:bg-ochre transition-colors">
-          <span className="material-icons text-[14px]">warning</span>
-          <span className="text-xs font-bold text-white">{weather.alert.type}</span>
+        <div className="flex items-center gap-1.5 mb-3 text-ochre">
+          <span className="material-icons text-[14px]">warning_amber</span>
+          <span className="text-xs font-medium">{weather.alert.type}</span>
         </div>
       )}
-      <div className="flex items-center gap-4 mt-2 relative z-10">
-        <span className="material-icons text-5xl text-primary group-hover:scale-110 transition-transform duration-300">partly_cloudy_day</span>
+      <div className="flex items-center gap-4">
+        <span className="material-icons text-4xl text-gray-300 dark:text-gray-600">partly_cloudy_day</span>
         <div>
-          <div className="text-3xl font-bold">{weather.temp}°F</div>
-          <div className="text-sm text-gray-300">{weather.condition}</div>
-          <div className="text-xs text-primary/80 mt-1 flex items-center gap-1">
-            <span className="material-icons text-[12px]">water_drop</span> {weather.humidity}% Humidity
+          <div className="text-2xl font-semibold text-gray-900 dark:text-white">{weather.temp}°F</div>
+          <div className="text-sm text-gray-400">{weather.condition}</div>
+          <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <span className="material-icons text-[12px]">water_drop</span> {weather.humidity}%
           </div>
         </div>
       </div>

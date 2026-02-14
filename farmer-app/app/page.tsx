@@ -8,24 +8,21 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full">
       <Header />
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 overflow-y-auto p-6 space-y-6 pb-24 md:pb-6 no-scrollbar">
         {/* Summary & Weather & Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="overflow-hidden">
             <YieldSummaryCard />
           </div>
-          <div className="md:col-span-4">
+          <div className="overflow-hidden">
             <WeatherWidget />
           </div>
-          <div className="md:col-span-4">
+          <div className="overflow-hidden">
             <QuickActions />
           </div>
         </div>
-        
+
         <ActiveFieldsList />
-        
-        {/* Bottom Space for mobile scroll */}
-        <div className="h-8 md:hidden"></div>
       </main>
     </div>
   );

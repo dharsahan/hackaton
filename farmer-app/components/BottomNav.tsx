@@ -7,30 +7,27 @@ export default function BottomNav() {
   const pathname = usePathname();
   if (pathname === '/harvest-log' || pathname === '/login') return null;
 
+  const tabs = [
+    { name: 'Home', icon: 'dashboard', href: '/' },
+    { name: 'Fields', icon: 'map', href: '/fields' },
+    { name: 'Tasks', icon: 'assignment', href: '/tasks' },
+    { name: 'Market', icon: 'trending_up', href: '/market' },
+    { name: 'Analytics', icon: 'bar_chart', href: '/analytics' },
+  ];
+
   return (
-    <nav className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-earth-dark/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 pb-6 pt-3 px-6 shadow-[0_-5px_15px_rgba(0,0,0,0.02)] z-50 md:hidden">
-      <div className="flex justify-between items-center">
-        <Link href="/" className="flex flex-col items-center gap-1 group">
-          <span className={`material-icons text-2xl group-hover:scale-110 transition-transform ${pathname === '/' ? 'text-primary' : 'text-gray-400 dark:text-gray-500 group-hover:text-primary'}`}>dashboard</span>
-          <span className={`text-[10px] font-bold ${pathname === '/' ? 'text-primary' : 'text-gray-400 dark:text-gray-500 group-hover:text-primary'}`}>Home</span>
-        </Link>
-        <Link href="/fields" className="flex flex-col items-center gap-1 group">
-          <span className={`material-icons text-2xl group-hover:text-primary transition-colors ${pathname === '/fields' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>map</span>
-          <span className={`text-[10px] font-medium group-hover:text-primary transition-colors ${pathname === '/fields' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>Fields</span>
-        </Link>
-        <div className="relative -top-6">
-          <Link href="/harvest-log" className="w-14 h-14 bg-earth-dark dark:bg-primary rounded-full shadow-lg shadow-primary/30 flex items-center justify-center group active:scale-95 transition-all hover:shadow-xl">
-            <span className="material-icons text-white dark:text-earth-dark text-3xl">add</span>
-          </Link>
-        </div>
-        <Link href="/tasks" className="flex flex-col items-center gap-1 group">
-          <span className={`material-icons text-2xl group-hover:text-primary transition-colors ${pathname === '/tasks' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>assignment</span>
-          <span className={`text-[10px] font-medium group-hover:text-primary transition-colors ${pathname === '/tasks' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>Tasks</span>
-        </Link>
-        <Link href="/analytics" className="flex flex-col items-center gap-1 group">
-          <span className={`material-icons text-2xl group-hover:text-primary transition-colors ${pathname === '/analytics' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>bar_chart</span>
-          <span className={`text-[10px] font-medium group-hover:text-primary transition-colors ${pathname === '/analytics' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>Analytics</span>
-        </Link>
+    <nav className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 pb-6 pt-2 px-4 z-50 md:hidden">
+      <div className="flex justify-around items-center">
+        {tabs.map((tab) => {
+          const isActive = pathname === tab.href;
+          return (
+            <Link key={tab.href} href={tab.href} className="flex flex-col items-center gap-0.5 py-1 min-w-[48px]">
+              <span className={`material-icons text-[22px] ${isActive ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>{tab.icon}</span>
+              <span className={`text-[10px] font-medium ${isActive ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>{tab.name}</span>
+              {isActive && <span className="w-1 h-1 rounded-full bg-primary mt-0.5"></span>}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

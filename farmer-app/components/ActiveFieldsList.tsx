@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { getFields } from '@/lib/data';
 
@@ -7,51 +6,31 @@ export default async function ActiveFieldsList() {
   const fields = await getFields();
 
   return (
-    <div className="pb-4">
-      <div className="flex justify-between items-end mb-3">
-        <h2 className="text-lg font-bold text-earth-dark dark:text-white flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-          Active Fields
-        </h2>
-        <Link className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer" href="/fields">View All</Link>
+    <div>
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Active Fields</h2>
+        <Link className="text-xs font-medium text-primary hover:text-primary-dark transition-colors" href="/fields">View All</Link>
       </div>
-      <div className="space-y-3">
-        {fields.slice(0, 2).map((field) => (
-          <div key={field.id} className="bg-white dark:bg-earth-dark p-4 rounded-xl shadow-card border border-gray-100 dark:border-gray-700 flex gap-4 hover:shadow-md transition-shadow cursor-pointer group">
-            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 relative">
-              <Image
-                alt={`${field.name} - ${field.crop}`}
-                src={field.imageUrl}
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
-                sizes="80px"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 py-0.5 text-center backdrop-blur-sm z-10">
-                {field.name}
+      <div className="space-y-2">
+        {fields.slice(0, 3).map((field) => (
+          <div key={field.id} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white text-sm">{field.crop}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{field.name} · {field.growthStage}</p>
               </div>
-            </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-bold text-earth-dark dark:text-white group-hover:text-primary transition-colors">{field.crop}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                  field.status === 'Healthy' 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
-                    : 'bg-ochre/20 text-ochre'
+              <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${field.status === 'Healthy'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-ochre/10 text-ochre'
                 }`}>{field.status}</span>
-              </div>
-              <p className="text-xs text-earth-mid dark:text-gray-400 mb-3">{field.growthStage}</p>
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 mb-1 overflow-hidden">
-                <div className="bg-primary h-2.5 rounded-full relative" style={{ width: `${field.maturityPercentage}%` }}>
-                  {field.maturityPercentage > 95 && (
-                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-white border-2 border-primary rounded-full shadow-sm"></span>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-between text-[10px] text-earth-mid dark:text-gray-400 font-medium">
-                <span>Maturity</span>
-                <span>{field.maturityPercentage}%</span>
-              </div>
+            </div>
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+              <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${field.maturityPercentage}%` }}></div>
+            </div>
+            <div className="flex justify-between text-[10px] text-gray-400 mt-1.5">
+              <span>Maturity</span>
+              <span>{field.maturityPercentage}%</span>
             </div>
           </div>
         ))}

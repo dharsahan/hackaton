@@ -1,10 +1,8 @@
 import React from 'react';
+import { getMarketplaceItems } from '@/lib/data';
+import MarketplacePageClient from '@/components/MarketplacePageClient';
 
-export default function MarketplacePage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Marketplace</h1>
-      <p className="text-gray-500">Buy tools, seeds, and fertilizers. (Coming Soon)</p>
-    </div>
-  );
+export default async function MarketplacePage() {
+  const items = await getMarketplaceItems();
+  return <MarketplacePageClient items={items} />;
 }

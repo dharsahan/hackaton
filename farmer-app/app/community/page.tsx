@@ -1,10 +1,8 @@
 import React from 'react';
+import { getCommunityPosts } from '@/lib/data';
+import CommunityPageClient from '@/components/CommunityPageClient';
 
-export default function CommunityPage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Community</h1>
-      <p className="text-gray-500">Connect with other farmers. (Coming Soon)</p>
-    </div>
-  );
+export default async function CommunityPage() {
+  const posts = await getCommunityPosts();
+  return <CommunityPageClient posts={posts} />;
 }
