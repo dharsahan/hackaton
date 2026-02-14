@@ -3,18 +3,23 @@
 import React, { useState } from 'react';
 import { Field } from '@/lib/types';
 import MapComponent from '@/components/Map';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
+import { INDIAN_CROPS } from '@/lib/constants';
 
 interface FieldsPageClientProps {
     fields: Field[];
 }
 
 export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
+    const { data: session } = useSession();
     const [isDrawing, setIsDrawing] = useState(false);
-    const [newFieldCoords, setNewFieldCoords] = useState<number[][] | null>(null);
+    const [newFieldCoords, setNewFieldCoords] = useState<{ lon: number; lat: number }[] | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newFieldDetails, setNewFieldDetails] = useState({
         name: '',
-        crop: 'Soybeans',
+        crop: 'Rice',
         status: 'Healthy',
     });
 
@@ -37,16 +42,20 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
         setSelectedFieldId('');
     };
 
-    const handleDrawEnd = (coords: number[][]) => {
+    const handleDrawEnd = (coords: { lon: number; lat: number }[]) => {
         setIsDrawing(false);
         setNewFieldCoords(coords);
         setIsAddModalOpen(true);
     };
 
-    const handleSaveField = (e: React.FormEvent) => {
+    const handleSaveField = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newField: Field = {
-            id: `f${Date.now()}`,
+        if (!session?.user) {
+            alert("Please sign in to save fields.");
+            return;
+        }
+
+        const fieldData = {
             name: newFieldDetails.name || 'New Field',
             crop: newFieldDetails.crop,
             acres: Math.round(Math.random() * 50 + 10), // Mock acres calculation
@@ -57,22 +66,40 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
             moisturePercentage: 45,
             coordinates: newFieldCoords || [],
             imageUrl: '',
+            userId: session.user.email || 'anonymous',
         };
 
-        setLocalFields([...localFields, newField]);
-        setIsAddModalOpen(false);
-        setNewFieldDetails({ name: '', crop: 'Soybeans', status: 'Healthy' });
-        setNewFieldCoords(null);
-        setSelectedFieldId(newField.id);
-        setIsListOpen(true);
+        try {
+            const docRef = await addDoc(collection(db, 'fields'), fieldData);
+            const newField: Field = {
+                id: docRef.id,
+                ...fieldData,
+            };
+
+            setLocalFields([...localFields, newField]);
+            setIsAddModalOpen(false);
+            setNewFieldDetails({ name: '', crop: 'Rice', status: 'Healthy' });
+            setNewFieldCoords(null);
+            setSelectedFieldId(newField.id);
+            setIsListOpen(true);
+        } catch (error) {
+            console.error("Error saving field:", error);
+            alert("Failed to save field. Please try again.");
+        }
     };
 
-    const handleDeleteField = (e: React.MouseEvent, id: string) => {
+    const handleDeleteField = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (confirm('Are you sure you want to delete this field?')) {
-            setLocalFields(localFields.filter(f => f.id !== id));
-            if (selectedFieldId === id) {
-                setSelectedFieldId('');
+            try {
+                await deleteDoc(doc(db, 'fields', id));
+                setLocalFields(localFields.filter(f => f.id !== id));
+                if (selectedFieldId === id) {
+                    setSelectedFieldId('');
+                }
+            } catch (error) {
+                console.error("Error deleting field:", error);
+                alert("Failed to delete field.");
             }
         }
     };
@@ -132,7 +159,7 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
                         >
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${field.crop === 'Soybeans' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${(field.crop.includes('Tree') || field.crop.includes('Wood') || field.crop.includes('Sandalwood')) ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'
                                         }`}>
                                         <span className="material-icons text-xl">agriculture</span>
                                     </div>
@@ -247,11 +274,9 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
                                     value={newFieldDetails.crop}
                                     onChange={e => setNewFieldDetails({ ...newFieldDetails, crop: e.target.value })}
                                 >
-                                    <option>Soybeans</option>
-                                    <option>Corn</option>
-                                    <option>Wheat</option>
-                                    <option>Rice</option>
-                                    <option>Cotton</option>
+                                    {INDIAN_CROPS.map(crop => (
+                                        <option key={crop} value={crop}>{crop}</option>
+                                    ))}
                                 </select>
                             </div>
 

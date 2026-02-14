@@ -23,7 +23,7 @@ interface MapComponentProps {
   selectedFieldId?: string;
   onFieldSelect?: (fieldId: string) => void;
   isDrawing?: boolean;
-  onDrawEnd?: (coordinates: number[][]) => void;
+  onDrawEnd?: (coordinates: { lon: number; lat: number }[]) => void;
   onDelete?: (fieldId: string) => void;
 }
 
@@ -117,8 +117,8 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
 
       // 3. Map
       // Center on the first field or default to Salem
-      const center = fields.length > 0 && fields[0].coordinates
-        ? fromLonLat(fields[0].coordinates[0])
+      const center = fields.length > 0 && fields[0].coordinates && fields[0].coordinates.length > 0
+        ? fromLonLat([fields[0].coordinates[0].lon, fields[0].coordinates[0].lat])
         : fromLonLat([78.1460, 11.6643]);
 
       const map = new Map({
@@ -204,7 +204,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
 
       fields.forEach(field => {
         if (field.coordinates) {
-          const coords = [field.coordinates.map(coord => fromLonLat(coord))];
+          const coords = [field.coordinates.map(c => fromLonLat([c.lon, c.lat]))];
           const polygon = new Polygon(coords);
 
           const feature = new Feature({
@@ -224,9 +224,9 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
       // Fly to selected field
       if (selectedFieldId) {
         const selectedField = fields.find(f => f.id === selectedFieldId);
-        if (selectedField?.coordinates) {
+        if (selectedField?.coordinates && selectedField.coordinates.length > 0) {
           const view = map.getView();
-          const location = fromLonLat(selectedField.coordinates[0]);
+          const location = fromLonLat([selectedField.coordinates[0].lon, selectedField.coordinates[0].lat]);
 
           // Don't animate if we are already close (prevents constant zooming)
           // const currentCenter = view.getCenter();
@@ -291,7 +291,8 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
           if (geometry instanceof Polygon && onDrawEnd) {
             // Transform coordinates back to LonLat
             const coords = geometry.getCoordinates()[0].map((coord) => {
-              return toLonLat(coord);
+              const [lon, lat] = toLonLat(coord);
+              return { lon, lat };
             });
             onDrawEnd(coords);
           }

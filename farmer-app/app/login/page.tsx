@@ -4,9 +4,10 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("farmer");
+  const [email, setEmail] = useState("farmer@farmertopia.com");
   const [password, setPassword] = useState("password");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,13 +17,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     const result = await signIn("credentials", {
-      username,
+      email,
       password,
       redirect: false,
     });
 
     if (result?.error) {
-      setError("Invalid credentials");
+      setError("Invalid email or password");
       setIsLoading(false);
     } else {
       router.push("/");
@@ -54,15 +55,15 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider ml-1">Username</label>
+            <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider ml-1">Email Address</label>
             <div className="relative group">
-              <span className="absolute left-4 top-3.5 material-icons text-gray-400 text-lg group-focus-within:text-green-400 transition-colors">person</span>
+              <span className="absolute left-4 top-3.5 material-icons text-gray-400 text-lg group-focus-within:text-green-400 transition-colors">email</span>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all text-sm backdrop-blur-sm"
-                placeholder="Enter username"
+                placeholder="Enter email"
               />
             </div>
           </div>
@@ -126,10 +127,19 @@ export default function LoginPage() {
           </button>
         </div>
 
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-green-400 font-semibold hover:text-green-300 transition-colors">
+              Sign Up
+            </Link>
+          </p>
+        </div>
+
         {/* Footer */}
         <div className="mt-8 text-center bg-black/20 mx-[-2rem] mb-[-2rem] p-4 rounded-b-3xl border-t border-white/5">
           <p className="text-[11px] text-gray-400">
-            Demo Credentials: <span className="text-green-400 font-mono bg-green-400/10 px-1 py-0.5 rounded">farmer</span> / <span className="text-green-400 font-mono bg-green-400/10 px-1 py-0.5 rounded">password</span>
+            Demo: <span className="text-green-400 font-mono bg-green-400/10 px-1 py-0.5 rounded">farmer@farmertopia.com</span> / <span className="text-green-400 font-mono bg-green-400/10 px-1 py-0.5 rounded">password</span>
           </p>
         </div>
       </div>

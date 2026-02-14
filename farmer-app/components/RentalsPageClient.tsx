@@ -2,6 +2,10 @@
 
 import React, { useState } from 'react';
 import { RentalEquipment } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
+import { compressImage } from '@/lib/imageUtils';
 
 interface RentalsPageClientProps {
     equipment: RentalEquipment[];
@@ -16,11 +20,13 @@ const typeIcons: Record<string, string> = {
 };
 
 export default function RentalsPageClient({ equipment: initialEquipment }: RentalsPageClientProps) {
+    const { data: session } = useSession();
     const [equipment, setEquipment] = useState(initialEquipment);
     const [activeType, setActiveType] = useState('All');
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [newEquipment, setNewEquipment] = useState<Partial<RentalEquipment>>({
         type: 'Tractor',
         available: true,
@@ -38,35 +44,96 @@ export default function RentalsPageClient({ equipment: initialEquipment }: Renta
 
     const availableCount = equipment.filter(e => e.available).length;
 
-    const handleAddEquipment = (e: React.FormEvent) => {
+    const handleAddEquipment = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newId = `r${Date.now()}`;
-        const item: RentalEquipment = {
-            id: newId,
-            name: newEquipment.name || 'Unknown Equipment',
-            type: newEquipment.type as any,
-            pricePerDay: Number(newEquipment.pricePerDay) || 0,
-            available: true,
-            rating: 0,
-            location: newEquipment.location || 'Unknown Location',
-            specs: newEquipment.specs || 'Standard Specs',
-            owner: 'Farmer John',
-            imageUrl: imagePreview || "https://upload.wikimedia.org/wikipedia/commons/2/20/Mahindra_tractor_model2.jpg"
-        };
-        setEquipment([item, ...equipment]);
-        setIsAddModalOpen(false);
-        setNewEquipment({ type: 'Tractor', available: true });
-        setImagePreview(null);
+        if (!session?.user) {
+            alert("Please sign in to list equipment.");
+            return;
+        }
+
+        try {
+            let finalImageUrl = imagePreview || "https://upload.wikimedia.org/wikipedia/commons/2/20/Mahindra_tractor_model2.jpg";
+
+            if (imageFile) {
+                finalImageUrl = await compressImage(imageFile);
+            }
+
+            const equipmentData = {
+                name: newEquipment.name || 'Unknown Equipment',
+                type: newEquipment.type as any,
+                pricePerDay: Number(newEquipment.pricePerDay) || 0,
+                available: true,
+                rating: 0,
+                location: newEquipment.location || 'Unknown Location',
+                specs: newEquipment.specs || 'Standard Specs',
+                owner: session.user.name || 'Anonymous',
+                userId: session.user.email || 'anonymous',
+                imageUrl: finalImageUrl
+            };
+
+            const docRef = await addDoc(collection(db, 'rental_equipment'), equipmentData);
+            const item: RentalEquipment = {
+                id: docRef.id,
+                ...equipmentData
+            };
+            setEquipment([item, ...equipment]);
+            setIsAddModalOpen(false);
+            setNewEquipment({ type: 'Tractor', available: true });
+            setImagePreview(null);
+            setImageFile(null);
+        } catch (error) {
+            console.error("Error adding equipment:", error);
+            alert("Failed to add equipment. Image might still be too large.");
+        }
+    };
+
+    const handleDeleteEquipment = async (id: string, ownerUserId: string) => {
+        if (!session?.user || (session.user.email !== ownerUserId)) {
+            alert("You can only delete your own listings.");
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete this listing?')) {
+            try {
+                await deleteDoc(doc(db, 'rental_equipment', id));
+                setEquipment(equipment.filter(e => e.id !== id));
+            } catch (error) {
+                console.error("Error deleting equipment:", error);
+                alert("Failed to delete equipment.");
+            }
+        }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleBookNow = async (id: string, name: string) => {
+        if (confirm(`Do you want to book ${name}?`)) {
+            try {
+                // Update Firestore
+                const equipmentRef = doc(db, 'rental_equipment', id);
+                await updateDoc(equipmentRef, {
+                    available: false
+                });
+
+                // Update local state to reflect booking
+                setEquipment(equipment.map(e => 
+                    e.id === id ? { ...e, available: false } : e
+                ));
+                alert(`${name} booked successfully!`);
+            } catch (error) {
+                console.error("Error booking equipment:", error);
+                alert("Failed to book equipment. Please try again.");
+            }
         }
     };
 
@@ -141,7 +208,18 @@ export default function RentalsPageClient({ equipment: initialEquipment }: Renta
                                     <div>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{eq.name}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{eq.name}</h3>
+                                                    {session?.user?.email === eq.userId && (
+                                                        <button
+                                                            onClick={() => handleDeleteEquipment(eq.id, eq.userId)}
+                                                            className="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                                            title="Delete Listing"
+                                                        >
+                                                            <span className="material-icons text-sm">delete</span>
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 <p className="text-[11px] text-gray-400 mt-0.5">{eq.type} · {eq.owner}</p>
                                             </div>
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${eq.available
@@ -170,7 +248,10 @@ export default function RentalsPageClient({ equipment: initialEquipment }: Renta
                                         </div>
 
                                         {eq.available && (
-                                            <button className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition-colors shadow-sm shadow-primary/20">
+                                            <button 
+                                                onClick={() => handleBookNow(eq.id, eq.name)}
+                                                className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition-colors shadow-sm shadow-primary/20"
+                                            >
                                                 Book Now
                                             </button>
                                         )}

@@ -17,10 +17,13 @@ export default function Sidebar() {
     { name: 'Map', icon: 'map', href: '/fields' },
     { name: 'Cattle', icon: 'pets', href: '/cattle' },
     { name: 'Rentals', icon: 'agriculture', href: '/rentals' },
+    { name: 'Inventory', icon: 'inventory_2', href: '/inventory' },
+    { name: 'Finance', icon: 'account_balance_wallet', href: '/finance' },
     { name: 'Marketplace', icon: 'store', href: '/marketplace' },
     { name: 'Community', icon: 'people', href: '/community' },
     { name: 'Analytics', icon: 'bar_chart', href: '/analytics' },
     { name: 'Commodities', icon: 'trending_up', href: '/market' },
+    { name: 'Profile', icon: 'account_circle', href: '/profile' },
   ];
 
   return (
@@ -63,7 +66,7 @@ export default function Sidebar() {
         </Link>
 
         <button
-          onClick={() => signOut()}
+          onClick={() => signOut({ callbackUrl: '/login' })}
           className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-gray-400 hover:bg-gray-50 hover:text-red-500 dark:hover:bg-gray-800 transition-colors justify-center text-sm cursor-pointer"
         >
           <span className="material-icons text-[16px]">logout</span>

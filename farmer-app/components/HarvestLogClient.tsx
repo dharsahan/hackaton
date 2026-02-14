@@ -3,6 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Field, HarvestRecord } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
 
 interface HarvestLogClientProps {
     fields: Field[];
@@ -18,6 +21,7 @@ const GRADE_STYLES: Record<string, string> = {
 type ViewMode = 'form' | 'history';
 
 export default function HarvestLogClient({ fields, initialRecords }: HarvestLogClientProps) {
+    const { data: session } = useSession();
     const [records, setRecords] = useState<HarvestRecord[]>(initialRecords);
     const [view, setView] = useState<ViewMode>('form');
     const [saved, setSaved] = useState(false);
@@ -47,10 +51,12 @@ export default function HarvestLogClient({ fields, initialRecords }: HarvestLogC
         return { totalWeight, avgMoisture, gradeACt, total: records.length };
     }, [records]);
 
-    const handleSave = () => {
-        if (!canSave || !selectedField) return;
-        const record: HarvestRecord = {
-            id: `h${Date.now()}`,
+    const handleSave = async () => {
+        if (!canSave || !selectedField || !session?.user) {
+            if (!session?.user) alert("Please sign in to log harvest.");
+            return;
+        }
+        const recordData = {
             fieldId: selectedFieldId,
             fieldName: selectedField.name,
             crop: selectedField.crop,
@@ -59,19 +65,32 @@ export default function HarvestLogClient({ fields, initialRecords }: HarvestLogC
             weightTons: parseFloat(weight),
             moisturePercent: moisture ? parseFloat(moisture) : 0,
             qualityGrade: grade,
-            notes: notes || undefined,
+            notes: notes || null,
+            userId: session.user.email || 'anonymous',
         };
-        setRecords(prev => [record, ...prev]);
-        setSaved(true);
-        setTimeout(() => {
-            setSaved(false);
-            setWeight('');
-            setMoisture('');
-            setGrade('A');
-            setNotes('');
-            setDate(todayStr);
-            setTime(nowTimeStr);
-        }, 2000);
+
+        try {
+            const docRef = await addDoc(collection(db, 'harvest_records'), recordData);
+            const newRecord: HarvestRecord = {
+                id: docRef.id,
+                ...recordData,
+                notes: recordData.notes || undefined,
+            };
+            setRecords(prev => [newRecord, ...prev]);
+            setSaved(true);
+            setTimeout(() => {
+                setSaved(false);
+                setWeight('');
+                setMoisture('');
+                setGrade('A');
+                setNotes('');
+                setDate(todayStr);
+                setTime(nowTimeStr);
+            }, 2000);
+        } catch (error) {
+            console.error("Error saving harvest record:", error);
+            alert("Failed to save harvest record. Please try again.");
+        }
     };
 
     const formatDate = (dateStr: string) => {

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Task } from '@/lib/types';
+import { useSession } from 'next-auth/react';
 
 interface TasksPageClientProps {
     initialTasks: Task[];
@@ -43,6 +44,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 export default function TasksPageClient({ initialTasks, userName, userAvatar }: TasksPageClientProps) {
+    const { data: session } = useSession();
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [showAddModal, setShowAddModal] = useState(false);
@@ -108,10 +110,28 @@ export default function TasksPageClient({ initialTasks, userName, userAvatar }: 
             status: 'Pending',
             type: newTask.type,
             priority: newTask.priority,
+            userId: session?.user?.email || 'anonymous',
         };
         setTasks(prev => [...prev, task]);
         setNewTask({ title: '', description: '', startTime: '09:00', endTime: '11:00', type: 'Maintenance', priority: 'Medium' });
         setShowAddModal(false);
+    };
+
+    const handleAutoSchedule = async () => {
+        if (!session?.user) return;
+        try {
+            const res = await fetch('/api/tasks/auto-schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: session.user.email }),
+            });
+            const data = await res.json();
+            alert(data.message);
+            // Refresh tasks or just let user know
+            window.location.reload(); 
+        } catch (error) {
+            console.error("Error auto-scheduling:", error);
+        }
     };
 
     const completedCount = tasksForDate.filter(t => t.status === 'Completed').length;
@@ -143,6 +163,14 @@ export default function TasksPageClient({ initialTasks, userName, userAvatar }: 
                     </div>
                     <div className="flex items-center gap-2">
                         <button
+                            onClick={handleAutoSchedule}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 text-xs font-medium hover:bg-emerald-100 transition-colors cursor-pointer flex items-center gap-1"
+                            title="Auto-schedule based on weather"
+                        >
+                            <span className="material-icons text-sm">auto_awesome</span>
+                            Smart Sync
+                        </button>
+                        <button
                             onClick={() => setShowAddModal(true)}
                             className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-dark transition-colors cursor-pointer flex items-center gap-1"
                         >
@@ -150,7 +178,14 @@ export default function TasksPageClient({ initialTasks, userName, userAvatar }: 
                             Add Task
                         </button>
                         <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                            <Image alt={userName} className="object-cover" src={userAvatar} width={32} height={32} />
+                            <Image 
+                                alt={userName} 
+                                className="object-cover" 
+                                src={userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`} 
+                                width={32} 
+                                height={32} 
+                                unoptimized
+                            />
                         </div>
                     </div>
                 </div>
@@ -300,7 +335,7 @@ export default function TasksPageClient({ initialTasks, userName, userAvatar }: 
                                     {task.workerAvatars && (
                                         <div className="flex -space-x-1.5 overflow-hidden mb-2">
                                             {task.workerAvatars.map((avatar, idx) => (
-                                                <Image key={idx} alt="Worker" className="inline-block rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src={avatar} width={22} height={22} />
+                                                <Image key={idx} alt="Worker" className="inline-block rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src={avatar} width={22} height={22} unoptimized />
                                             ))}
                                         </div>
                                     )}

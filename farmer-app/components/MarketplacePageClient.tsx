@@ -2,6 +2,12 @@
 
 import React, { useState } from 'react';
 import { MarketplaceItem } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
+import { compressImage } from '@/lib/imageUtils';
+import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 interface MarketplacePageClientProps {
     items: MarketplaceItem[];
@@ -28,18 +34,20 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function MarketplacePageClient({ items: initialItems }: MarketplacePageClientProps) {
+    const { data: session } = useSession();
+    const router = useRouter();
+    const { cart, addToCart, removeFromCart, cartTotal, itemCount } = useCart();
     const [items, setItems] = useState(initialItems);
     const [activeCategory, setActiveCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [newItem, setNewItem] = useState<Partial<MarketplaceItem>>({
         category: 'Seeds',
         inStock: true
     });
 
-    // Cart State
-    const [cart, setCart] = useState<MarketplaceItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
     const categories = ['All', 'Seeds', 'Tools', 'Fertilizers', 'Equipment', 'Pesticides'];
@@ -50,30 +58,70 @@ export default function MarketplacePageClient({ items: initialItems }: Marketpla
         return matchesCategory && matchesSearch;
     });
 
-    const handleAddItem = (e: React.FormEvent) => {
+    const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newId = `mp${Date.now()}`;
-        const item: MarketplaceItem = {
-            id: newId,
-            name: newItem.name || 'Unknown',
-            category: newItem.category as any,
-            price: Number(newItem.price) || 0,
-            seller: 'Farmer John',
-            rating: 0,
-            reviewCount: 0,
-            inStock: true,
-            description: newItem.description || 'No description provided.',
-            imageUrl: imagePreview || "https://upload.wikimedia.org/wikipedia/commons/7/70/Wikibooks_planting-tomato_seed.JPG"
-        };
-        setItems([item, ...items]);
-        setIsAddModalOpen(false);
-        setNewItem({ category: 'Seeds', inStock: true });
-        setImagePreview(null);
+        if (!session?.user) {
+            alert("Please sign in to list items.");
+            return;
+        }
+
+        try {
+            let finalImageUrl = imagePreview || "https://upload.wikimedia.org/wikipedia/commons/7/70/Wikibooks_planting-tomato_seed.JPG";
+
+            if (imageFile) {
+                finalImageUrl = await compressImage(imageFile);
+            }
+
+            const itemData = {
+                name: newItem.name || 'Unknown',
+                category: newItem.category as any,
+                price: Number(newItem.price) || 0,
+                seller: session.user.name || 'Anonymous',
+                userId: session.user.email || 'anonymous',
+                rating: 0,
+                reviewCount: 0,
+                inStock: true,
+                description: newItem.description || 'No description provided.',
+                imageUrl: finalImageUrl
+            };
+
+            const docRef = await addDoc(collection(db, 'marketplace_items'), itemData);
+            const item: MarketplaceItem = {
+                id: docRef.id,
+                ...itemData
+            };
+            setItems([item, ...items]);
+            setIsAddModalOpen(false);
+            setNewItem({ category: 'Seeds', inStock: true });
+            setImagePreview(null);
+            setImageFile(null);
+        } catch (error) {
+            console.error("Error adding item:", error);
+            alert("Failed to add item. Image might still be too large.");
+        }
+    };
+
+    const handleDeleteItem = async (id: string, itemUserId: string) => {
+        if (!session?.user || (session.user.email !== itemUserId)) {
+            alert("You can only delete your own items.");
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete this item?')) {
+            try {
+                await deleteDoc(doc(db, 'marketplace_items', id));
+                setItems(items.filter(i => i.id !== id));
+            } catch (error) {
+                console.error("Error deleting item:", error);
+                alert("Failed to delete item.");
+            }
+        }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
@@ -82,22 +130,9 @@ export default function MarketplacePageClient({ items: initialItems }: Marketpla
         }
     };
 
-    const addToCart = (item: MarketplaceItem) => {
-        setCart([...cart, item]);
-    };
-
-    const removeFromCart = (index: number) => {
-        const newCart = [...cart];
-        newCart.splice(index, 1);
-        setCart(newCart);
-    };
-
-    const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
-
     const handleCheckout = () => {
-        alert(`Order placed successfully! Total: ₹${cartTotal.toLocaleString()}`);
-        setCart([]);
         setIsCartOpen(false);
+        router.push('/checkout');
     };
 
     return (
@@ -115,9 +150,9 @@ export default function MarketplacePageClient({ items: initialItems }: Marketpla
                                 className="relative p-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700 shadow-sm"
                             >
                                 <span className="material-icons text-xl">shopping_cart</span>
-                                {cart.length > 0 && (
+                                {itemCount > 0 && (
                                     <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white dark:border-gray-900">
-                                        {cart.length}
+                                        {itemCount}
                                     </span>
                                 )}
                             </button>
@@ -177,6 +212,15 @@ export default function MarketplacePageClient({ items: initialItems }: Marketpla
                                     alt={item.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
+                                {session?.user?.email === item.userId && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id, item.userId); }}
+                                        className="absolute top-2 left-2 p-1.5 rounded-lg bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors z-10"
+                                        title="Delete Item"
+                                    >
+                                        <span className="material-icons text-sm">delete</span>
+                                    </button>
+                                )}
                                 {!item.inStock && (
                                     <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center">
                                         <span className="text-xs font-medium text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded">Out of Stock</span>
@@ -349,18 +393,18 @@ export default function MarketplacePageClient({ items: initialItems }: Marketpla
                                     </div>
                                 </div>
                             ) : (
-                                cart.map((item, index) => (
-                                    <div key={`${item.id}-${index}`} className="flex gap-4 items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
+                                cart.map((item) => (
+                                    <div key={item.id} className="flex gap-4 items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
                                         <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-lg shrink-0 overflow-hidden border border-gray-100 dark:border-gray-700">
                                             <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</h3>
-                                            <p className="text-xs text-gray-500">{item.supplier}</p>
-                                            <p className="text-sm font-semibold text-primary mt-1">₹{item.price.toLocaleString()}</p>
+                                            <p className="text-xs text-gray-500">{item.seller} {item.quantity > 1 && <span className="text-primary font-bold">x{item.quantity}</span>}</p>
+                                            <p className="text-sm font-semibold text-primary mt-1">₹{(item.price * item.quantity).toLocaleString()}</p>
                                         </div>
                                         <button
-                                            onClick={() => removeFromCart(index)}
+                                            onClick={() => removeFromCart(item.id)}
                                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         >
                                             <span className="material-icons text-xl">delete_outline</span>

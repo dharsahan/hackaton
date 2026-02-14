@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Users Collection ---
+    match /users/{userId} {
+      allow read: if true; // Public for shopfront
+      allow write: if request.auth != null; // Should be ownerId check in prod
+    }
+
+    // Default fallback
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

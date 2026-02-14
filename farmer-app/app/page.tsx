@@ -3,8 +3,13 @@ import YieldSummaryCard from '@/components/YieldSummaryCard';
 import WeatherWidget from '@/components/WeatherWidget';
 import QuickActions from '@/components/QuickActions';
 import ActiveFieldsList from '@/components/ActiveFieldsList';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.email || "farmer";
+
   return (
     <div className="flex flex-col h-full">
       <Header />
@@ -12,7 +17,7 @@ export default function Home() {
         {/* Summary & Weather & Actions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="overflow-hidden">
-            <YieldSummaryCard />
+            <YieldSummaryCard userId={userId} />
           </div>
           <div className="overflow-hidden">
             <WeatherWidget />
@@ -22,7 +27,7 @@ export default function Home() {
           </div>
         </div>
 
-        <ActiveFieldsList />
+        <ActiveFieldsList userId={userId} />
       </main>
     </div>
   );

@@ -4,6 +4,7 @@ export interface User {
   id: string;
   name: string;
   avatarUrl: string;
+  role: 'owner' | 'worker';
 }
 
 export interface Field {
@@ -16,8 +17,9 @@ export interface Field {
   maturityPercentage: number;
   lastIrrigated: string; // ISO date
   moisturePercentage: number;
-  coordinates: number[][]; // Array of [lon, lat] points for polygon
+  coordinates: { lon: number; lat: number }[]; // Array of points for polygon
   imageUrl: string;
+  userId: string;
 }
 
 export interface Task {
@@ -33,6 +35,8 @@ export interface Task {
   priority?: 'High' | 'Medium' | 'Low';
   location?: string;
   workerAvatars?: string[];
+  userId: string;
+  assignedTo?: string; // worker email
 }
 
 export interface Weather {
@@ -83,6 +87,7 @@ export interface CattleListing {
   price: number;
   healthStatus: 'Healthy' | 'Vaccinated' | 'Under Treatment';
   seller: string;
+  userId: string;
   location: string;
   imageUrl: string;
 }
@@ -97,6 +102,7 @@ export interface CommunityPost {
   likes: number;
   comments: number;
   tags: string[];
+  userId: string;
 }
 
 // Marketplace
@@ -107,6 +113,7 @@ export interface MarketplaceItem {
   price: number;
   originalPrice?: number;
   seller: string;
+  userId: string;
   rating: number;
   reviewCount: number;
   inStock: boolean;
@@ -125,6 +132,7 @@ export interface RentalEquipment {
   location: string;
   specs: string;
   owner: string;
+  userId: string;
   imageUrl: string;
 }
 
@@ -139,4 +147,26 @@ export interface HarvestRecord {
   moisturePercent: number;
   qualityGrade: 'A' | 'B' | 'C';
   notes?: string;
+  userId: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: 'Seeds' | 'Fertilizers' | 'Chemicals' | 'Fuel' | 'Tools';
+  quantity: number;
+  unit: string;
+  minThreshold: number;
+  userId: string;
+}
+
+export interface FinancialRecord {
+  id: string;
+  type: 'income' | 'expense';
+  category: string;
+  amount: number;
+  date: string;
+  description: string;
+  fieldId?: string;
+  userId: string;
 }

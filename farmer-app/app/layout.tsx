@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import BottomNav from "@/components/BottomNav";
-import Sidebar from "@/components/Sidebar";
 import { Providers } from "@/components/Providers";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const inter = Inter({
   variable: "--font-display",
@@ -28,20 +27,12 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning={true}
-        className={`${inter.variable} antialiased bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen flex flex-col md:flex-row`}
+        className={`${inter.variable} antialiased bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen`}
       >
         <Providers>
-          <Sidebar />
-
-          <div className="flex-1 flex flex-col relative w-full h-screen overflow-hidden">
-            <div className="flex-1 overflow-y-auto no-scrollbar relative">
-              {children}
-            </div>
-
-            <div className="md:hidden">
-              <BottomNav />
-            </div>
-          </div>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </Providers>
       </body>
     </html>

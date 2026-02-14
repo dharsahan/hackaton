@@ -1,8 +1,18 @@
 import React from 'react';
 import { getYieldHistory } from '@/lib/data';
 
-export default async function YieldSummaryCard() {
-  const history = await getYieldHistory();
+export default async function YieldSummaryCard({ userId }: { userId: string }) {
+  const history = await getYieldHistory(userId);
+  
+  if (!history || history.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+        <h3 className="text-gray-400 text-xs font-medium uppercase tracking-wide">Total Est. Yield</h3>
+        <p className="text-sm text-gray-400 mt-2">No yield data available</p>
+      </div>
+    );
+  }
+
   const currentYear = history[history.length - 1];
   const lastYear = history[history.length - 2];
 

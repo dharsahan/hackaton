@@ -3,12 +3,17 @@
 import React, { useState, useMemo } from 'react';
 import { CattleListing } from '@/lib/types';
 import Image from 'next/image';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
+import { compressImage } from '@/lib/imageUtils';
 
 interface CattlePageClientProps {
     cattle: CattleListing[];
 }
 
 export default function CattlePageClient({ cattle: initialCattle }: CattlePageClientProps) {
+    const { data: session } = useSession();
     const [cattle, setCattle] = useState(initialCattle);
     const [activeFilter, setActiveFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +23,7 @@ export default function CattlePageClient({ cattle: initialCattle }: CattlePageCl
         healthStatus: 'Healthy'
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const [selectedCattle, setSelectedCattle] = useState<CattleListing | null>(null);
 
@@ -43,38 +49,73 @@ export default function CattlePageClient({ cattle: initialCattle }: CattlePageCl
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
     };
 
-    const handleAddListing = (e: React.FormEvent) => {
+    const handleAddListing = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newId = `c${Date.now()}`;
-        const listing: CattleListing = {
-            id: newId,
-            name: newListing.name || 'Unknown',
-            breed: newListing.breed || 'Unknown',
-            category: newListing.category as any,
-            age: newListing.age || 'Unknown',
-            weight: Number(newListing.weight) || 0,
-            price: Number(newListing.price) || 0,
-            healthStatus: newListing.healthStatus as any,
-            seller: 'Farmer John', // Current user
-            location: newListing.location || 'Salem, TN',
-            imageUrl: imagePreview || "https://images.unsplash.com/photo-1546445317-29f4545e9d53?q=80&w=2502&auto=format&fit=crop"
-        };
-        setCattle([listing, ...cattle]);
-        setIsAddModalOpen(false);
-        setNewListing({ category: 'Dairy', healthStatus: 'Healthy' });
-        setImagePreview(null);
+        if (!session?.user) {
+            alert("Please sign in to add listings.");
+            return;
+        }
+
+        try {
+            let finalImageUrl = imagePreview || "https://images.unsplash.com/photo-1546445317-29f4545e9d53?q=80&w=2502&auto=format&fit=crop";
+
+            if (imageFile) {
+                // Compress and convert to Base64
+                finalImageUrl = await compressImage(imageFile);
+            }
+
+            const listingData = {
+                name: newListing.name || 'Unknown',
+                breed: newListing.breed || 'Unknown',
+                category: newListing.category as any,
+                age: newListing.age || 'Unknown',
+                weight: Number(newListing.weight) || 0,
+                price: Number(newListing.price) || 0,
+                healthStatus: newListing.healthStatus as any,
+                seller: session.user.name || 'Anonymous',
+                userId: session.user.email || 'anonymous',
+                location: newListing.location || 'Salem, TN',
+                imageUrl: finalImageUrl
+            };
+
+            const docRef = await addDoc(collection(db, 'cattle'), listingData);
+            const listing: CattleListing = {
+                id: docRef.id,
+                ...listingData
+            };
+            setCattle([listing, ...cattle]);
+            setIsAddModalOpen(false);
+            setNewListing({ category: 'Dairy', healthStatus: 'Healthy' });
+            setImagePreview(null);
+            setImageFile(null);
+        } catch (error) {
+            console.error("Error adding listing:", error);
+            alert("Failed to add listing. Image might still be too large.");
+        }
     };
 
-    const handleDeleteListing = (id: string) => {
+    const handleDeleteListing = async (id: string, listingUserId: string) => {
+        if (!session?.user || (session.user.email !== listingUserId)) {
+            alert("You can only delete your own listings.");
+            return;
+        }
+
         if (confirm('Are you sure you want to delete this listing?')) {
-            setCattle(cattle.filter(c => c.id !== id));
-            setSelectedCattle(null);
+            try {
+                await deleteDoc(doc(db, 'cattle', id));
+                setCattle(cattle.filter(c => c.id !== id));
+                setSelectedCattle(null);
+            } catch (error) {
+                console.error("Error deleting listing:", error);
+                alert("Failed to delete listing.");
+            }
         }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
@@ -421,13 +462,15 @@ export default function CattlePageClient({ cattle: initialCattle }: CattlePageCl
                                 Buy Now
                             </button>
 
-                            <button
-                                onClick={() => handleDeleteListing(selectedCattle.id)}
-                                className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-bold py-3.5 rounded-xl transition-all mt-3 flex items-center justify-center gap-2"
-                            >
-                                <span className="material-icons text-sm">delete</span>
-                                Delete Listing
-                            </button>
+                            {session?.user?.email === selectedCattle.userId && (
+                                <button
+                                    onClick={() => handleDeleteListing(selectedCattle.id, selectedCattle.userId)}
+                                    className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-bold py-3.5 rounded-xl transition-all mt-3 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-icons text-sm">delete</span>
+                                    Delete Listing
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

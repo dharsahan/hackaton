@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { getFields } from '@/lib/data';
 
-export default async function ActiveFieldsList() {
-  const fields = await getFields();
+export default async function ActiveFieldsList({ userId }: { userId: string }) {
+  const fields = await getFields(userId);
 
   return (
     <div>
@@ -12,7 +12,7 @@ export default async function ActiveFieldsList() {
         <Link className="text-xs font-medium text-primary hover:text-primary-dark transition-colors" href="/fields">View All</Link>
       </div>
       <div className="space-y-2">
-        {fields.slice(0, 3).map((field) => (
+        {fields.length > 0 ? fields.slice(0, 3).map((field) => (
           <div key={field.id} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
             <div className="flex justify-between items-start mb-3">
               <div>
@@ -33,7 +33,11 @@ export default async function ActiveFieldsList() {
               <span>{field.maturityPercentage}%</span>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 text-center">
+            <p className="text-sm text-gray-400">No active fields found. Create one in the Map section!</p>
+          </div>
+        )}
       </div>
     </div>
   );

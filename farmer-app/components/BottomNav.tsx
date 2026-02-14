@@ -12,7 +12,7 @@ export default function BottomNav() {
     { name: 'Fields', icon: 'map', href: '/fields' },
     { name: 'Tasks', icon: 'assignment', href: '/tasks' },
     { name: 'Market', icon: 'trending_up', href: '/market' },
-    { name: 'Analytics', icon: 'bar_chart', href: '/analytics' },
+    { name: 'Profile', icon: 'account_circle', href: '/profile' },
   ];
 
   return (

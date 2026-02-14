@@ -1,10 +1,16 @@
 import React from 'react';
 import { getInsights, getYieldHistory } from '@/lib/data';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export default async function AnalyticsPage() {
-    const history = await getYieldHistory();
-    const insights = await getInsights();
-    const currentYear = history[history.length - 1];
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.email || "farmer";
+    
+    const history = await getYieldHistory(userId);
+    const insights = await getInsights(userId);
+    
+    const currentYear = history.length > 0 ? history[history.length - 1] : { yield: 0, total: 0 };
 
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark">
@@ -12,7 +18,7 @@ export default async function AnalyticsPage() {
             <header className="px-6 pt-6 pb-4 flex justify-between items-center sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm shrink-0 md:pt-8">
                 <div>
                     <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Analytics</h1>
-                    <p className="text-xs text-gray-400 mt-0.5">Golden Harvest Farms</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{session?.user?.name || "Golden Harvest Farms"}</p>
                 </div>
                 <button className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
                     <span className="material-icons text-[20px]">account_circle</span>
@@ -108,20 +114,24 @@ export default async function AnalyticsPage() {
                         </div>
                         {/* Insight Card */}
                         <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex-1">
-                            <div className="flex items-start gap-3">
-                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
-                                    <span className="material-icons text-base">science</span>
+                            {insights.length > 0 ? (
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
+                                        <span className="material-icons text-base">science</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">{insights[0].title}</h4>
+                                        <p className="text-xs text-gray-400 leading-relaxed">{insights[0].description}</p>
+                                        {insights[0].actionLabel && (
+                                            <button className="mt-2 text-xs font-medium text-primary flex items-center gap-0.5 hover:underline">
+                                                {insights[0].actionLabel} <span className="material-icons text-[12px]">arrow_forward</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">{insights[0].title}</h4>
-                                    <p className="text-xs text-gray-400 leading-relaxed">{insights[0].description}</p>
-                                    {insights[0].actionLabel && (
-                                        <button className="mt-2 text-xs font-medium text-primary flex items-center gap-0.5 hover:underline">
-                                            {insights[0].actionLabel} <span className="material-icons text-[12px]">arrow_forward</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                            ) : (
+                                <p className="text-xs text-gray-400 italic">No insights available yet.</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -131,7 +141,7 @@ export default async function AnalyticsPage() {
                     <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">More Insights</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {insights.slice(1).map((insight) => (
+                        {insights.length > 1 ? insights.slice(1).map((insight) => (
                             <div key={insight.id} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
                                 <div className="flex items-start gap-3">
                                     <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${insight.type === 'warning' ? 'bg-amber-50 text-amber-500 dark:bg-amber-900/20' :
@@ -152,7 +162,11 @@ export default async function AnalyticsPage() {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="col-span-full py-8 text-center text-gray-400 italic text-xs">
+                                No additional insights.
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
