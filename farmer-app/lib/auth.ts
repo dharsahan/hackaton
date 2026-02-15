@@ -38,8 +38,9 @@ export const authOptions: NextAuthOptions = {
               image: userData?.image || user.photoURL,
             };
           }
-        } catch (error: any) {
-          console.error("Firebase Auth error:", error.code, error.message);
+        } catch (error) {
+          const authError = error as { code?: string; message?: string };
+          console.error("Firebase Auth error:", authError.code, authError.message);
           
           // Fallback for demo account if Firebase Auth is not yet configured with this user
           if (credentials.email === "farmer@farmertopia.com" && credentials.password === "password") {

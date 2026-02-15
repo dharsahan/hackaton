@@ -134,3 +134,68 @@
 [debug] [2026-02-14T18:30:23.332Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
 [debug] [2026-02-14T18:30:23.334Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-02-14T18:30:23.334Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:38:40.013Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:38:40.016Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:38:40.021Z] Checked if tokens are valid: false, expires at: 1771096988221
+[debug] [2026-02-14T20:38:40.022Z] Checked if tokens are valid: false, expires at: 1771096988221
+[debug] [2026-02-14T20:38:40.023Z] > refreshing access token with scopes: []
+[debug] [2026-02-14T20:38:40.029Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-14T20:38:40.029Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-14T20:38:40.423Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-02-14T20:38:40.423Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-14T20:38:40.435Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:38:42.224Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:38:42.224Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:38:42.229Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:38:42.229Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:38:42.229Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:42.230Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:42.230Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:38:43.537Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:38:43.537Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:38:43.543Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:43.543Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:43.543Z] >>> [apiv2][query] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery [none]
+[debug] [2026-02-14T20:38:43.543Z] >>> [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery {"structuredQuery":{"from":[{"collectionId":"fields","allDescendants":false}],"where":{"compositeFilter":{"op":"AND","filters":[]}},"limit":10},"explainOptions":{"analyze":true},"newTransaction":{"readOnly":{"readTime":"2026-02-14T20:38:43.542Z"}}}
+[debug] [2026-02-14T20:38:44.423Z] <<< [apiv2][status] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery 400
+[debug] [2026-02-14T20:38:44.423Z] <<< [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery [{"error":{"code":400,"message":"The requested 'read_time' cannot be in the future.","status":"INVALID_ARGUMENT"}}]
+[debug] [2026-02-14T20:38:53.092Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:38:53.092Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:38:53.092Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:53.092Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:53.092Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:38:54.921Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:38:54.921Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:38:54.923Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:38:54.923Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:38:54.924Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:54.924Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:54.924Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:38:56.607Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:38:56.607Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:38:56.608Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:56.609Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:38:56.609Z] >>> [apiv2][query] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:listCollectionIds [none]
+[debug] [2026-02-14T20:38:56.609Z] >>> [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:listCollectionIds {"pageSize":2147483647}
+[debug] [2026-02-14T20:38:57.288Z] <<< [apiv2][status] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:listCollectionIds 200
+[debug] [2026-02-14T20:38:57.288Z] <<< [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:listCollectionIds {"collectionIds":["cattle","community_posts","fields","harvest_records","insights","inventory","market_prices","marketplace_items","rental_equipment","tasks","users","yield_history"]}
+[debug] [2026-02-14T20:39:10.767Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:39:10.767Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:39:10.767Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:10.767Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:10.767Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:39:12.353Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:39:12.353Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:39:12.355Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-14T20:39:12.355Z] > authorizing via signed-in user (dharshan20072606@gmail.com)
+[debug] [2026-02-14T20:39:12.356Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:12.356Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:12.356Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo [none]
+[debug] [2026-02-14T20:39:13.764Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo 200
+[debug] [2026-02-14T20:39:13.764Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/farmertopia-prod-v1/billingInfo {"name":"projects/farmertopia-prod-v1/billingInfo","projectId":"farmertopia-prod-v1","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-14T20:39:13.765Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:13.765Z] Checked if tokens are valid: true, expires at: 1771105119424
+[debug] [2026-02-14T20:39:13.766Z] >>> [apiv2][query] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery [none]
+[debug] [2026-02-14T20:39:13.766Z] >>> [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery {"structuredQuery":{"from":[{"collectionId":"insights","allDescendants":false}],"where":{"compositeFilter":{"op":"AND","filters":[]}},"limit":1},"explainOptions":{"analyze":true},"newTransaction":{"readOnly":{"readTime":"2026-02-14T20:39:13.765Z"}}}
+[debug] [2026-02-14T20:39:15.544Z] <<< [apiv2][status] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery 400
+[debug] [2026-02-14T20:39:15.544Z] <<< [apiv2][body] POST https://firestore.googleapis.com/v1/projects/farmertopia-prod-v1/databases/(default)/documents:runQuery [{"error":{"code":400,"message":"The requested 'read_time' cannot be in the future.","status":"INVALID_ARGUMENT"}}]

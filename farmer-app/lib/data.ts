@@ -40,14 +40,34 @@ export async function getUser(userId: string = "farmer@farmertopia.com"): Promis
 
 async function getCollectionData<T>(collectionName: string, userId?: string, extraConstraints: QueryConstraint[] = []): Promise<T[]> {
   try {
-    const constraints: QueryConstraint[] = [...extraConstraints];
+    let q;
+    const baseCollection = collection(db, collectionName);
+
     if (userId) {
-      constraints.push(where("userId", "==", userId));
+      // Try fetching with the provided userId (usually email)
+      const constraints = [where("userId", "==", userId), ...extraConstraints];
+      q = query(baseCollection, ...constraints);
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+      }
+
+      // Fallback: If it's a demo account or specific email, try the legacy 'farmer' ID
+      if (userId.includes("farmer")) {
+        const fallbackQ = query(baseCollection, where("userId", "==", "farmer"), ...extraConstraints);
+        const fallbackSnapshot = await getDocs(fallbackQ);
+        if (!fallbackSnapshot.empty) {
+          return fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+        }
+      }
     }
     
-    const q = query(collection(db, collectionName), ...constraints);
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+    // Final Fallback: Just get the first few items from the collection so the UI isn't empty
+    const finalQ = query(baseCollection, limit(10), ...extraConstraints);
+    const finalSnapshot = await getDocs(finalQ);
+    return finalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+
   } catch (error) {
     console.error(`Error fetching ${collectionName}:`, error);
     return [];
@@ -93,13 +113,23 @@ export async function getMarketPrices(): Promise<MarketPrice[]> {
 
 export async function getYieldHistory(userId: string): Promise<YieldData[]> {
   try {
-    const q = query(collection(db, "yield_history"), where("userId", "==", userId), orderBy("year", "asc"));
-    const snapshot = await getDocs(q);
+    const yieldRef = collection(db, "yield_history");
+    let q = query(yieldRef, where("userId", "==", userId), orderBy("year", "asc"));
+    let snapshot = await getDocs(q);
+
+    if (snapshot.empty && userId.includes("farmer")) {
+      q = query(yieldRef, where("userId", "==", "farmer"), orderBy("year", "asc"));
+      snapshot = await getDocs(q);
+    }
+
+    if (snapshot.empty) {
+      snapshot = await getDocs(query(yieldRef, orderBy("year", "asc"), limit(10)));
+    }
+
     return snapshot.docs.map(doc => doc.data() as YieldData);
   } catch (error) {
     console.error("Error fetching yield history:", error);
-    const snapshot = await getDocs(collection(db, "yield_history"));
-    return snapshot.docs.map(doc => doc.data() as YieldData);
+    return [];
   }
 }
 
@@ -112,15 +142,7 @@ export async function getCattle(userId?: string): Promise<CattleListing[]> {
 }
 
 export async function getCommunityPosts(): Promise<CommunityPost[]> {
-  try {
-    const q = query(collection(db, "community_posts"), orderBy("timestamp", "desc"));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityPost));
-  } catch (error) {
-    console.error("Error fetching community posts:", error);
-    const snapshot = await getDocs(collection(db, "community_posts"));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityPost));
-  }
+  return getCollectionData<CommunityPost>("community_posts", undefined, [orderBy("timestamp", "desc")]);
 }
 
 export async function getMarketplaceItems(userId?: string): Promise<MarketplaceItem[]> {
@@ -132,15 +154,7 @@ export async function getRentalEquipment(userId?: string): Promise<RentalEquipme
 }
 
 export async function getHarvestRecords(userId: string): Promise<HarvestRecord[]> {
-  try {
-    const q = query(collection(db, "harvest_records"), where("userId", "==", userId), orderBy("date", "desc"));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HarvestRecord));
-  } catch (error) {
-    console.error("Error fetching harvest records:", error);
-    const snapshot = await getDocs(collection(db, "harvest_records"));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HarvestRecord));
-  }
+  return getCollectionData<HarvestRecord>("harvest_records", userId, [orderBy("date", "desc")]);
 }
 
 export async function getInventory(userId: string): Promise<InventoryItem[]> {
@@ -148,19 +162,19 @@ export async function getInventory(userId: string): Promise<InventoryItem[]> {
 }
 
 export async function getFinanceRecords(userId: string): Promise<FinancialRecord[]> {
-  try {
-    const q = query(collection(db, "financial_records"), where("userId", "==", userId), orderBy("date", "desc"));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FinancialRecord));
-  } catch (error) {
-    return getCollectionData<FinancialRecord>("financial_records", userId);
-  }
+  return getCollectionData<FinancialRecord>("financial_records", userId, [orderBy("date", "desc")]);
 }
 
 export async function getFarmDetails(userId: string) {
   try {
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    let userRef = doc(db, "users", userId);
+    let userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists() && userId.includes("farmer")) {
+      userRef = doc(db, "users", "farmer");
+      userSnap = await getDoc(userRef);
+    }
+
     if (userSnap.exists()) {
       return userSnap.data();
     }

@@ -3,16 +3,23 @@ import Link from 'next/link';
 
 export default function QuickActions() {
   return (
-    <div>
-      <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-3">Quick Actions</h2>
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/harvest-log" className="bg-primary/10 hover:bg-primary/15 transition-colors p-4 rounded-xl flex flex-col items-center justify-center text-center group">
-          <span className="material-icons text-primary text-2xl mb-2">agriculture</span>
-          <span className="font-medium text-sm text-gray-700 dark:text-gray-200">Log Harvest</span>
+    <div className="space-y-4">
+      <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Quick Actions</h2>
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/harvest-log" className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-primary/30 transition-all p-5 rounded-3xl flex flex-col items-center justify-center text-center group shadow-sm hover:shadow-md active:scale-95">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center mb-3 group-hover:bg-primary group-hover:text-white transition-all">
+            <span className="material-icons text-2xl">agriculture</span>
+          </div>
+          <span className="font-bold text-sm text-gray-900 dark:text-white">Log Harvest</span>
+          <span className="text-[10px] text-gray-400 mt-1 uppercase font-black tracking-tighter">Record Yield</span>
         </Link>
-        <Link href="/tasks" className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center text-center group">
-          <span className="material-icons text-primary text-2xl mb-2">add_task</span>
-          <span className="font-medium text-sm text-gray-700 dark:text-gray-200">New Task</span>
+        
+        <Link href="/tasks" className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-emerald-400/30 transition-all p-5 rounded-3xl flex flex-col items-center justify-center text-center group shadow-sm hover:shadow-md active:scale-95">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+            <span className="material-icons text-2xl">add_task</span>
+          </div>
+          <span className="font-bold text-sm text-gray-900 dark:text-white">New Task</span>
+          <span className="text-[10px] text-gray-400 mt-1 uppercase font-black tracking-tighter">Schedule Work</span>
         </Link>
       </div>
     </div>

@@ -62,11 +62,12 @@ export default function SignupPage() {
       } else {
         router.push("/");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Signup error:", err);
-      if (err.code === 'auth/email-already-in-use') {
+      const firebaseError = err as { code?: string };
+      if (firebaseError.code === 'auth/email-already-in-use') {
         setError("Email already registered");
-      } else if (err.code === 'auth/weak-password') {
+      } else if (firebaseError.code === 'auth/weak-password') {
         setError("Password should be at least 6 characters");
       } else {
         setError("Registration failed. Please try again.");
