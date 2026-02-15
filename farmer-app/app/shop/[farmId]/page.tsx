@@ -2,6 +2,8 @@ import React from 'react';
 import { getFarmDetails, getHarvestRecords } from '@/lib/data';
 import ShopPageClient from '@/components/ShopPageClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShopPage({ params }: { params: Promise<{ farmId: string }> }) {
   const { farmId } = await params;
   const decodedFarmId = decodeURIComponent(farmId);

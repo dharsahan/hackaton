@@ -1,15 +1,17 @@
 import React from 'react';
 import { getMarketPrices } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
+
 const commodityImages: Record<string, string> = {
   'ZW': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=200&auto=format&fit=crop', // Wheat
-  'ZS': 'https://www.scoular.com/wp-content/uploads/2020/10/dark-hilum-soybeans2_27952870.jpg.webp', // Soybeans
+  'ZS': 'https://images.unsplash.com/photo-1600747476236-76579658b1b1?q=80&w=200&auto=format&fit=crop', // Soybeans
   'ZC': 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?q=80&w=200&auto=format&fit=crop', // Corn
-  'ZR': 'https://img.jagranjosh.com/images/2025/09/12/article/image/scientific-name-of-rice-1757656335124.webp', // Rice
-  'KC': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=200&auto=format&fit=crop', // Coffee
-  'SUG': 'https://lirp.cdn-website.com/cbf48001/dms3rep/multi/opt/Different%2BTypes%2Bof%2BSugar-640w.jpg', // Sugarcane reuse sugar img
-  'CT': 'https://alnassaj.com/wp-content/uploads/2024/10/top-view-cotton-flower-decoration_23-2148446653.jpg', // Cotton
-  'TMC': 'https://images.unsplash.com/photo-1615485290382-441e4d04fcad?q=80&w=200&auto=format&fit=crop', // Turmeric
+  'ZR': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=200&auto=format&fit=crop', // Rice
+  'KC': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=200&auto=format&fit=crop', // Coffee
+  'SUG': 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d?q=80&w=200&auto=format&fit=crop', // Sugarcane
+  'CT': 'https://images.unsplash.com/photo-1502395809857-fd80069897d0?q=80&w=200&auto=format&fit=crop', // Cotton
+  'TMC': 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?q=80&w=200&auto=format&fit=crop', // Turmeric
 };
 
 // Helper for smooth bezier curves
