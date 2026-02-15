@@ -14,22 +14,12 @@ export default async function Home() {
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark">
       <Header />
       <main className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 md:pb-8 no-scrollbar max-w-7xl mx-auto w-full">
-        
+
         {/* Top Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <YieldSummaryCard userId={userId} />
           <WeatherWidget />
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-center">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                   <span className="material-icons">trending_up</span>
-                </div>
-                <div>
-                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Market Status</p>
-                   <p className="text-lg font-bold text-gray-900 dark:text-white">Active & Bullish</p>
-                </div>
-             </div>
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -41,7 +31,7 @@ export default async function Home() {
           {/* Sidebar Area */}
           <div className="space-y-8">
             <QuickActions />
-            
+
             {/* Recent Activity Placeholder */}
             <div className="space-y-4">
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Upcoming Tasks</h2>

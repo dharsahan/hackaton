@@ -170,3 +170,16 @@ export interface FinancialRecord {
   fieldId?: string;
   userId: string;
 }
+
+export interface EarthEngineAnalysis {
+  tileUrl: string;
+  ndviStats: {
+    mean: number;
+    min: number;
+    max: number;
+  };
+  soilMoisture: number;    // volumetric % (0-100)
+  humidity: number;        // relative humidity % (0-100)
+  timestamp: string;
+  satellite: string;
+}

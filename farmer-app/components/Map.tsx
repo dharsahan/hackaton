@@ -25,14 +25,17 @@ interface MapComponentProps {
   isDrawing?: boolean;
   onDrawEnd?: (coordinates: { lon: number; lat: number }[]) => void;
   onDelete?: (fieldId: string) => void;
+  ndviTileUrl?: string | null;
 }
 
-export default function MapComponent({ fields = [], selectedFieldId, onFieldSelect, isDrawing = false, onDrawEnd, onDelete }: MapComponentProps) {
+export default function MapComponent({ fields = [], selectedFieldId, onFieldSelect, isDrawing = false, onDrawEnd, onDelete, ndviTileUrl }: MapComponentProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<Map | null>(null);
   const drawInteraction = useRef<Draw | null>(null);
-  const [mapType, setMapType] = useState<'osm' | 'satellite'>('osm');
+  const ndviLayerRef = useRef<TileLayer | null>(null);
+  const vectorLayerRef = useRef<VectorLayer | null>(null);
+  const [mapType, setMapType] = useState<'osm' | 'satellite' | 'ndvi'>('osm');
 
   // Status colors
   const getStatusColor = (status: string) => {
@@ -76,7 +79,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
       });
 
       const vectorSource = new VectorSource();
-      const vectorLayer = new VectorLayer({
+      const vLayer = new VectorLayer({
         source: vectorSource,
         style: (feature) => {
           const status = feature.get('status') || 'Healthy';
@@ -101,6 +104,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
           });
         }
       });
+      vectorLayerRef.current = vLayer;
 
       // 2. Overlay
       const overlay = new Overlay({
@@ -123,7 +127,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
 
       const map = new Map({
         target: mapRef.current,
-        layers: [osmLayer, satelliteLayer, vectorLayer],
+        layers: [osmLayer, satelliteLayer, vLayer],
         overlays: [overlay],
         view: new View({
           center: center,
@@ -198,8 +202,8 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
     // Update features whenever fields prop changes
     const map = mapInstance.current;
     if (map) {
-      const vectorLayer = map.getLayers().getArray()[2] as VectorLayer;
-      const source = vectorLayer.getSource();
+      const vl = vectorLayerRef.current;
+      const source = vl?.getSource();
       source?.clear();
 
       fields.forEach(field => {
@@ -227,9 +231,6 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
         if (selectedField?.coordinates && selectedField.coordinates.length > 0) {
           const view = map.getView();
           const location = fromLonLat([selectedField.coordinates[0].lon, selectedField.coordinates[0].lat]);
-
-          // Don't animate if we are already close (prevents constant zooming)
-          // const currentCenter = view.getCenter();
 
           view.animate({
             center: location,
@@ -276,8 +277,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
     if (!map) return;
 
     if (isDrawing) {
-      const vectorLayer = map.getLayers().getArray()[2] as VectorLayer;
-      const source = vectorLayer.getSource();
+      const source = vectorLayerRef.current?.getSource();
 
       if (source) {
         // Add Draw interaction
@@ -298,8 +298,6 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
           }
         });
 
-        // Actually, let's fix the imports first in the next tool call properly
-        // For now, I will just reference the Draw interaction and let the component update
         map.addInteraction(draw);
         drawInteraction.current = draw;
       }
@@ -319,11 +317,45 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
         if (layer instanceof TileLayer) {
           const name = layer.get('name');
           if (name === 'osm') layer.setVisible(mapType === 'osm');
-          if (name === 'satellite') layer.setVisible(mapType === 'satellite');
+          if (name === 'satellite') layer.setVisible(mapType === 'satellite' || mapType === 'ndvi');
+          if (name === 'ndvi') layer.setVisible(mapType === 'ndvi');
         }
       });
     }
   }, [mapType]);
+
+  // Handle NDVI Tile Layer
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map) return;
+
+    // Remove old NDVI layer if present
+    if (ndviLayerRef.current) {
+      map.removeLayer(ndviLayerRef.current);
+      ndviLayerRef.current = null;
+    }
+
+    if (ndviTileUrl) {
+      const ndviLayer = new TileLayer({
+        source: new XYZ({
+          url: ndviTileUrl,
+          maxZoom: 18,
+        }),
+        opacity: 0.75,
+        visible: mapType === 'ndvi',
+        properties: { name: 'ndvi' },
+      });
+
+      // Insert NDVI layer before vector layer (index 2)
+      const layers = map.getLayers();
+      const vectorLayerIndex = layers.getLength() - 1;
+      layers.insertAt(vectorLayerIndex, ndviLayer);
+      ndviLayerRef.current = ndviLayer;
+
+      // Auto-switch to NDVI view
+      setMapType('ndvi');
+    }
+  }, [ndviTileUrl]);
 
   return (
     <div className="w-full h-full relative group">
@@ -335,22 +367,50 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
       </div>
 
       {/* Layer Switcher */}
-      <div className="absolute top-4 right-4 bg-white dark:bg-gray-900 p-1 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 flex flex-col gap-1">
+      <div className="absolute top-4 right-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col gap-1">
         <button
           onClick={() => setMapType('osm')}
-          className={`p-2 rounded-md transition-colors ${mapType === 'osm' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          className={`p-2 rounded-xl transition-colors ${mapType === 'osm' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
           title="Map View"
         >
           <span className="material-icons text-xl">map</span>
         </button>
         <button
           onClick={() => setMapType('satellite')}
-          className={`p-2 rounded-md transition-colors ${mapType === 'satellite' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          className={`p-2 rounded-xl transition-colors ${mapType === 'satellite' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
           title="Satellite View"
         >
           <span className="material-icons text-xl">satellite_alt</span>
         </button>
+        {ndviTileUrl && (
+          <button
+            onClick={() => setMapType('ndvi')}
+            className={`p-2 rounded-xl transition-colors ${mapType === 'ndvi' ? 'bg-emerald-500/10 text-emerald-600' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+            title="NDVI Vegetation View"
+          >
+            <span className="material-icons text-xl">eco</span>
+          </button>
+        )}
       </div>
+
+      {/* NDVI Legend */}
+      {mapType === 'ndvi' && ndviTileUrl && (
+        <div className="absolute bottom-20 left-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-10 animate-fade-in">
+          <h4 className="text-[10px] font-bold uppercase text-gray-400 mb-2 tracking-wider">NDVI — Crop Health</h4>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold text-red-500">Stressed</span>
+            <div className="flex h-3 rounded-full overflow-hidden flex-1 min-w-[100px]">
+              <div className="flex-1" style={{ background: '#d73027' }} />
+              <div className="flex-1" style={{ background: '#fc8d59' }} />
+              <div className="flex-1" style={{ background: '#fee08b' }} />
+              <div className="flex-1" style={{ background: '#d9ef8b' }} />
+              <div className="flex-1" style={{ background: '#91cf60' }} />
+              <div className="flex-1" style={{ background: '#1a9850' }} />
+            </div>
+            <span className="text-[10px] font-semibold text-green-600">Healthy</span>
+          </div>
+        </div>
+      )}
 
       {/* Zoom Controls (Custom) */}
       <div className="absolute bottom-6 right-4 flex flex-col gap-2">
