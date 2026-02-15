@@ -139,7 +139,7 @@ export default function AnalyticsDashboardClient({
                                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">Yield Trend</h2>
                                     <div className="flex items-baseline gap-2 mt-1">
                                         <span className="text-3xl font-black text-gray-900 dark:text-white">{yieldAnalytics.current}</span>
-                                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">bu/ac</span>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">Quintal</span>
                                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center ${yieldAnalytics.change >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                             {yieldAnalytics.change >= 0 ? '+' : ''}{yieldAnalytics.change.toFixed(1)}%
                                         </span>
