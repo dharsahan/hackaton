@@ -123,6 +123,7 @@ export interface NDVIResult {
         max: number;
     };
     soilMoisture: number;
+    rootZoneMoisture?: number; // Added from SMAP
     humidity: number;
     timestamp: string;
     satellite: string;
@@ -183,16 +184,20 @@ export async function analyzeFieldNDVI(
     const latestImage = s2.first();
     const imageDate = await getImageDate(latestImage);
 
-    // Fetch soil moisture & humidity from ERA5-Land
-    const soilData = await fetchSoilData(polygon, start, end);
+    // Fetch soil moisture from NASA SMAP
+    const smapData = await fetchSMAPData(polygon, start, end);
+
+    // Fetch humidity from ERA5-Land (keep for humidity)
+    const era5Data = await fetchSoilData(polygon, start, end);
 
     return {
         tileUrl,
         ndviStats: stats,
-        soilMoisture: soilData.soilMoisture,
-        humidity: soilData.humidity,
+        soilMoisture: smapData.surfaceMoisture > 0 ? smapData.surfaceMoisture : era5Data.soilMoisture, // Prefer SMAP
+        rootZoneMoisture: smapData.rootZoneMoisture,
+        humidity: era5Data.humidity,
         timestamp: imageDate,
-        satellite: 'Sentinel-2',
+        satellite: 'Sentinel-2 + SMAP',
     };
 }
 
@@ -239,8 +244,64 @@ function getImageDate(image: any): Promise<string> {
 }
 
 /**
- * Fetch soil moisture and humidity from ERA5-Land reanalysis data.
- * - Soil moisture: volumetric_soil_water_layer_1 (m³/m³ → %)
+ * Fetch soil moisture from NASA SMAP L4 Global 3-hourly 9 km (SPL4SMGP)
+ * Bands: sm_surface, sm_rootzone (Units: m³/m³)
+ */
+function fetchSMAPData(
+    region: any,
+    startDate: string,
+    endDate: string
+): Promise<{ surfaceMoisture: number; rootZoneMoisture: number }> {
+    return new Promise((resolve) => {
+        try {
+            // NASA SMAP L4 Global 3-hourly 9 km
+            const smap = ee.ImageCollection('NASA/SMAP/SPL4SMGP/008')
+                .filterBounds(region)
+                .filterDate(startDate, endDate)
+                .select(['sm_surface', 'sm_rootzone']);
+
+            // Get the mean of the period
+            const meanImage = smap.mean();
+
+            // Use centroid to ensure we get a value even for small fields (<< 9km)
+            const centroid = region.centroid();
+
+            const stats = meanImage.reduceRegion({
+                reducer: ee.Reducer.mean(),
+                geometry: centroid,
+                scale: 9000,
+            });
+
+            stats.evaluate((result: any, err: any) => {
+                if (err || !result) {
+                    console.warn('[EE] SMAP fetch failed or result empty:', err);
+                    resolve({ surfaceMoisture: 0, rootZoneMoisture: 0 });
+                    return;
+                }
+
+                console.log('[EE] SMAP raw result:', result);
+
+                // Convert m³/m³ to Percentage (0-100)
+                // Typical range 0.0 - 0.5+ m³/m³, so 0 - 50+%
+                const surface = (result.sm_surface ?? 0) * 100;
+                const root = (result.sm_rootzone ?? 0) * 100;
+
+                console.log(`[EE] SMAP parsed: Surface=${surface}%, Root=${root}%`);
+
+                resolve({
+                    surfaceMoisture: Math.round(surface * 10) / 10,
+                    rootZoneMoisture: Math.round(root * 10) / 10
+                });
+            });
+        } catch (err) {
+            console.warn('[EE] SMAP error:', err);
+            resolve({ surfaceMoisture: 0, rootZoneMoisture: 0 });
+        }
+    });
+}
+
+/**
+ * Fetch humidity from ERA5-Land reanalysis data.
  * - Humidity: derived from temperature_2m and dewpoint_temperature_2m
  */
 function fetchSoilData(
@@ -271,12 +332,11 @@ function fetchSoilData(
                     return;
                 }
 
-                // Soil moisture: m³/m³ → percentage (0-100)
+                // Soil moisture (Legacy fallback)
                 const swl1 = result.volumetric_soil_water_layer_1 ?? 0;
                 const soilMoisture = Math.round(swl1 * 100 * 10) / 10;
 
-                // Humidity: Magnus formula for relative humidity
-                // T and Td come in Kelvin from ERA5
+                // Humidity: Magnus formula
                 const tK = result.temperature_2m ?? 273.15;
                 const tdK = result.dewpoint_temperature_2m ?? 273.15;
                 const tC = tK - 273.15;

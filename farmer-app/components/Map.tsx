@@ -37,6 +37,17 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
   const vectorLayerRef = useRef<VectorLayer | null>(null);
   const [mapType, setMapType] = useState<'osm' | 'satellite' | 'ndvi'>('osm');
 
+  // Refs for callbacks to avoid stale closures in OL event listeners
+  const onDeleteRef = useRef(onDelete);
+  const onFieldSelectRef = useRef(onFieldSelect);
+  const onDrawEndRef = useRef(onDrawEnd);
+
+  useEffect(() => {
+    onDeleteRef.current = onDelete;
+    onFieldSelectRef.current = onFieldSelect;
+    onDrawEndRef.current = onDrawEnd;
+  }, [onDelete, onFieldSelect, onDrawEnd]);
+
   // Status colors
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -162,7 +173,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
                   <div class="text-sm font-semibold">${name}</div>
                   <div class="text-xs text-gray-600">${crop} · ${acres} ac</div>
                 </div>
-                <button id="popup-delete-btn" class="text-gray-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1" title="Delete Field">
+                <button id="popup-delete-btn" class="text-gray-400 hover:text-red-500 transition-colors p-2" title="Delete Field">
                   <span class="material-icons text-sm">delete</span>
                 </button>
               </div>
@@ -174,19 +185,26 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
               deleteBtn.onclick = (e) => {
                 e.stopPropagation();
                 const id = feature.get('id');
-                if (onDelete) onDelete(id);
+                console.log("Delete button clicked (map click), ID:", id);
+                if (onDeleteRef.current) {
+                  console.log("Calling onDeleteRef");
+                  onDeleteRef.current(id);
+                } else {
+                  console.error("onDeleteRef is missing");
+                }
               };
             }
           }
 
           overlay.setPosition(coord);
+          console.log("Popup opened for:", feature.get('name'));
 
           // Trigger select callback
           const id = feature.get('id');
-          if (onFieldSelect) onFieldSelect(id);
+          if (onFieldSelectRef.current) onFieldSelectRef.current(id);
         } else {
           overlay.setPosition(undefined);
-          if (onFieldSelect) onFieldSelect('');
+          if (onFieldSelectRef.current) onFieldSelectRef.current('');
         }
       });
 
@@ -250,7 +268,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
                   <div class="text-sm font-semibold">${selectedField.name}</div>
                   <div class="text-xs text-gray-600">${selectedField.crop} · ${selectedField.acres} ac</div>
                 </div>
-                <button id="popup-delete-btn" class="text-gray-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1" title="Delete Field">
+                <button id="popup-delete-btn" class="text-gray-400 hover:text-red-500 transition-colors p-2" title="Delete Field">
                   <span class="material-icons text-sm">delete</span>
                 </button>
               </div>
@@ -261,7 +279,11 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
             if (deleteBtn) {
               deleteBtn.onclick = (e) => {
                 e.stopPropagation();
-                if (onDelete) onDelete(selectedField.id);
+                console.log("Delete button clicked (useEffect), ID:", selectedField.id);
+                if (onDeleteRef.current) {
+                  console.log("Calling onDeleteRef from effect");
+                  onDeleteRef.current(selectedField.id);
+                }
               };
             }
           }
@@ -269,7 +291,7 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
       }
     }
 
-  }, [fields, selectedFieldId, onFieldSelect]);
+  }, [fields, selectedFieldId]);
 
   // Handle Drawing Interaction
   useEffect(() => {
@@ -288,13 +310,13 @@ export default function MapComponent({ fields = [], selectedFieldId, onFieldSele
 
         draw.on('drawend', (evt) => {
           const geometry = evt.feature.getGeometry();
-          if (geometry instanceof Polygon && onDrawEnd) {
+          if (geometry instanceof Polygon && onDrawEndRef.current) {
             // Transform coordinates back to LonLat
             const coords = geometry.getCoordinates()[0].map((coord) => {
               const [lon, lat] = toLonLat(coord);
               return { lon, lat };
             });
-            onDrawEnd(coords);
+            onDrawEndRef.current(coords);
           }
         });
 

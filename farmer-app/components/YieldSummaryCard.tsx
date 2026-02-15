@@ -14,7 +14,7 @@ export default async function YieldSummaryCard({ userId }: { userId: string }) {
 
   const currentYear = history[history.length - 1];
   const lastYear = history[history.length - 2];
-  const totalYield = currentYear?.yield * 1240 || 245000; // Fallback mock
+  const totalYield = currentYear?.yield * 1240 || 0; // Fallback mock
   const yieldChange = lastYear ? ((currentYear.yield - lastYear.yield) / lastYear.yield) * 100 : 12.5;
   const isPositive = yieldChange >= 0;
 
@@ -62,8 +62,8 @@ export default async function YieldSummaryCard({ userId }: { userId: string }) {
         <div className="mt-4">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Est. Yield</p>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(totalYield / 1000)}k</span>
-            <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Bushels</span>
+            <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(totalYield / 100)}k</span>
+            <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Quintals</span>
           </div>
         </div>
       </div>

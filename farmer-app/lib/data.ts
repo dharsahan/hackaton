@@ -143,11 +143,156 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
 }
 
 export async function getMarketplaceItems(userId?: string): Promise<MarketplaceItem[]> {
-  return getCollectionData<MarketplaceItem>("marketplace_items", userId);
+  const items = await getCollectionData<MarketplaceItem>("marketplace_items", userId);
+  if (items.length > 0) return items;
+
+  // Mock Data if Firestore is empty
+  const mockItems: MarketplaceItem[] = [
+    {
+      id: 'mock1',
+      name: 'Organic Tomato Seeds',
+      category: 'Seeds',
+      price: 450,
+      originalPrice: 500,
+      description: 'High-yield organic tomato seeds, resistant to common pests. Suitable for all seasons.',
+      imageUrl: 'https://images.unsplash.com/photo-1592841200221-a6898f3c47ea?q=80&w=800&auto=format&fit=crop',
+      seller: 'Green Earth Farms',
+      userId: 'seller1',
+      rating: 4.5,
+      reviewCount: 12,
+      inStock: true
+    },
+    {
+      id: 'mock2',
+      name: 'Heavy Duty Shovel',
+      category: 'Tools',
+      price: 850,
+      description: 'Ergonomic stainless steel shovel for digging and planting. Durable and rust-resistant.',
+      imageUrl: 'https://images.unsplash.com/photo-1617576683096-00fc8eecb3af?q=80&w=800&auto=format&fit=crop', // Tools
+      seller: 'AgriTools Pro',
+      userId: 'seller2',
+      rating: 4.8,
+      reviewCount: 45,
+      inStock: true
+    },
+    {
+      id: 'mock3',
+      name: 'NPK Fertilizer 19-19-19',
+      category: 'Fertilizers',
+      price: 1200,
+      originalPrice: 1400,
+      description: 'Balanced water-soluble fertilizer for all crops. Promotes vigorous growth.',
+      imageUrl: 'https://images.unsplash.com/photo-1627242163519-db4d663cf03d?q=80&w=800&auto=format&fit=crop', // Fertilizer
+      seller: 'CropCare Solutions',
+      userId: 'seller3',
+      rating: 4.2,
+      reviewCount: 8,
+      inStock: true
+    },
+    {
+      id: 'mock4',
+      name: 'Natural Neem Pesticide',
+      category: 'Pesticides',
+      price: 350,
+      description: 'Eco-friendly neem oil based pesticide. Safe for organic farming.',
+      imageUrl: 'https://plus.unsplash.com/premium_photo-1678344170545-53cb7c01478c?q=80&w=800&auto=format&fit=crop', // Pesticide/Spray
+      seller: 'Organic Defenders',
+      userId: 'seller4',
+      rating: 4.6,
+      reviewCount: 22,
+      inStock: true
+    },
+    {
+      id: 'mock5',
+      name: 'Drip Irrigation Kit',
+      category: 'Equipment',
+      price: 2500,
+      originalPrice: 3000,
+      description: 'Complete drip irrigation kit for small farms (1 acre). Water efficient.',
+      imageUrl: 'https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?q=80&w=800&auto=format&fit=crop', // Irrigation
+      seller: 'HydroSystems',
+      userId: 'seller5',
+      rating: 4.9,
+      reviewCount: 15,
+      inStock: true
+    },
+    {
+      id: 'mock6',
+      name: 'Hybrid Corn Seeds',
+      category: 'Seeds',
+      price: 600,
+      description: 'Drought-tolerant hybrid corn seeds. High sweetness and yield.',
+      imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?q=80&w=800&auto=format&fit=crop', // Corn
+      seller: 'SeedMaster',
+      userId: 'seller6',
+      rating: 4.3,
+      reviewCount: 18,
+      inStock: false
+    }
+  ];
+  return mockItems;
 }
 
 export async function getRentalEquipment(userId?: string): Promise<RentalEquipment[]> {
-  return getCollectionData<RentalEquipment>("rental_equipment", userId);
+  const equipment = await getCollectionData<RentalEquipment>("rental_equipment", userId);
+  if (equipment.length > 0) return equipment;
+
+  // Mock Data if Firestore is empty
+  const mockEquipment: RentalEquipment[] = [
+    {
+      id: 'rent1',
+      name: 'Mahindra 575 DI',
+      type: 'Tractor',
+      pricePerDay: 1200,
+      available: true,
+      imageUrl: 'https://images.unsplash.com/photo-1595829706594-c61f3225c8e1?q=80&w=800&auto=format&fit=crop', // Tractor
+      location: 'Salem, TN',
+      specs: '45 HP, 2WD',
+      owner: 'Ramesh Kumaran',
+      userId: 'owner1',
+      rating: 4.8
+    },
+    {
+      id: 'rent2',
+      name: 'Kubota Harvester',
+      type: 'Harvester',
+      pricePerDay: 5000,
+      available: true,
+      imageUrl: 'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=800&auto=format&fit=crop', // Harvester
+      location: 'Erode, TN',
+      specs: 'Combine Harvester, Rice/Wheat',
+      owner: 'Siva Agro',
+      userId: 'owner2',
+      rating: 4.9
+    },
+    {
+      id: 'rent3',
+      name: 'Power Tiller',
+      type: 'Tiller',
+      pricePerDay: 800,
+      available: true,
+      imageUrl: 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c801e?q=80&w=800&auto=format&fit=crop', // Tiller (generic farm)
+      location: 'Namakkal, TN',
+      specs: '12 HP, Diesel',
+      owner: 'Kumar Rentals',
+      userId: 'owner3',
+      rating: 4.5
+    },
+    {
+      id: 'rent4',
+      name: 'Drone Sprayer',
+      type: 'Sprayer',
+      pricePerDay: 2500,
+      available: false,
+      imageUrl: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=80&w=800&auto=format&fit=crop', // Drone
+      location: 'Coimbatore, TN',
+      specs: '10L Capacity, 15min flight',
+      owner: 'TechFarm Solutions',
+      userId: 'owner4',
+      rating: 5.0
+    }
+  ];
+  return mockEquipment;
 }
 
 export async function getHarvestRecords(userId: string): Promise<HarvestRecord[]> {

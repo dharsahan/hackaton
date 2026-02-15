@@ -9,6 +9,9 @@ import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useSession } from 'next-auth/react';
 import { INDIAN_CROPS } from '@/lib/constants';
 
+import { getArea } from 'ol/sphere';
+import Polygon from 'ol/geom/Polygon';
+
 interface FieldsPageClientProps {
     fields: Field[];
 }
@@ -114,6 +117,22 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
         setIsAddModalOpen(true);
     };
 
+    const calculateAcres = (coords: { lon: number; lat: number }[]) => {
+        if (!coords || coords.length < 3) return 0;
+        try {
+            // Polygon expects array of rings, where each ring is array of [lon, lat]
+            const polygon = new Polygon([coords.map(c => [c.lon, c.lat])]);
+            // getArea returns square meters for geodesic area on sphere
+            const areaSqMeters = getArea(polygon);
+            // 1 sq meter = 0.000247105 acres
+            const areaAcres = areaSqMeters * 0.000247105;
+            return Math.round(areaAcres * 100) / 100;
+        } catch (error) {
+            console.error("Error calculating area:", error);
+            return 0;
+        }
+    };
+
     const handleSaveField = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!session?.user) {
@@ -121,10 +140,12 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
             return;
         }
 
+        const calculatedAcres = newFieldCoords ? calculateAcres(newFieldCoords) : 0;
+
         const fieldData = {
             name: newFieldDetails.name || 'New Field',
             crop: newFieldDetails.crop,
-            acres: Math.round(Math.random() * 50 + 10),
+            acres: calculatedAcres > 0 ? calculatedAcres : Math.round(Math.random() * 50 + 10), // Fallback only if calc failed
             status: newFieldDetails.status as any,
             growthStage: 'Seedling',
             maturityPercentage: 10,
@@ -154,23 +175,40 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
         }
     };
 
-    const handleDeleteField = async (e: React.MouseEvent, id: string) => {
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; fieldId: string | null; fieldName: string | null }>({
+        isOpen: false,
+        fieldId: null,
+        fieldName: null
+    });
+
+    const handleDeleteClick = (e: React.MouseEvent, field: Field) => {
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this field?')) {
-            try {
-                await deleteDoc(doc(db, 'fields', id));
-                setLocalFields(localFields.filter(f => f.id !== id));
-                if (selectedFieldId === id) setSelectedFieldId('');
-                if (activeNdviFieldId === id) setActiveNdviFieldId(null);
-                setNdviData(prev => {
-                    const next = { ...prev };
-                    delete next[id];
-                    return next;
-                });
-            } catch (error) {
-                console.error("Error deleting field:", error);
-                alert("Failed to delete field.");
-            }
+        setDeleteConfirmation({
+            isOpen: true,
+            fieldId: field.id,
+            fieldName: field.name
+        });
+    };
+
+    const confirmDelete = async () => {
+        const id = deleteConfirmation.fieldId;
+        if (!id) return;
+
+        try {
+            await deleteDoc(doc(db, 'fields', id));
+            setLocalFields(prev => prev.filter(f => f.id !== id));
+
+            if (selectedFieldId === id) setSelectedFieldId('');
+            if (activeNdviFieldId === id) setActiveNdviFieldId(null);
+            setNdviData(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            setDeleteConfirmation({ isOpen: false, fieldId: null, fieldName: null });
+        } catch (error) {
+            console.error("Error deleting field:", error);
+            alert("Failed to delete field.");
         }
     };
 
@@ -250,7 +288,7 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
                                             : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'
                                             }`}>{field.status}</span>
                                         <button
-                                            onClick={(e) => handleDeleteField(e, field.id)}
+                                            onClick={(e) => handleDeleteClick(e, field)}
                                             className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
                                             title="Delete Field"
                                         >
@@ -346,7 +384,7 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
                     }}
                     isDrawing={isDrawing}
                     onDrawEnd={handleDrawEnd}
-                    onDelete={(id) => handleDeleteField({ stopPropagation: () => { } } as React.MouseEvent, id)}
+                    onDelete={(id) => handleDeleteClick({ stopPropagation: () => { } } as React.MouseEvent, localFields.find(f => f.id === id) || { id, name: 'Field' } as Field)}
                     ndviTileUrl={activeTileUrl}
                 />
 
@@ -428,6 +466,45 @@ export default function FieldsPageClient({ fields }: FieldsPageClientProps) {
                                 Save Field
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmation.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-scale-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                                <span className="material-icons">warning</span>
+                                Delete Field?
+                            </h2>
+                            <button
+                                onClick={() => setDeleteConfirmation({ isOpen: false, fieldId: null, fieldName: null })}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                            >
+                                <span className="material-icons text-gray-500">close</span>
+                            </button>
+                        </div>
+
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
+                            Are you sure you want to delete <strong>{deleteConfirmation.fieldName}</strong>? This action cannot be undone.
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteConfirmation({ isOpen: false, fieldId: null, fieldName: null })}
+                                className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-500/20 active:scale-[0.98] transition-all"
+                            >
+                                Delete Field
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -11,8 +11,15 @@ import { authOptions } from "@/lib/auth";
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.email || "farmer@farmertopia.com";
+  let userId = "farmer@farmertopia.com";
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+      userId = session.user.email;
+    }
+  } catch (error) {
+    console.error("Failed to get session:", error);
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-[#0f172a] transition-colors duration-300">
