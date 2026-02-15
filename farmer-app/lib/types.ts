@@ -60,6 +60,9 @@ export interface MarketPrice {
   trend: 'up' | 'down' | 'neutral';
   exchange: string;
   chartData: number[]; // Simple array for sparkline
+  category: 'Grains' | 'Livestock' | 'Energy' | 'Softs' | 'Spices' | 'Vegetables' | 'Fibers' | 'Oilseeds' | 'Other';
+  location?: string;
+  lastUpdated?: string;
 }
 
 export interface YieldData {
